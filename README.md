@@ -168,6 +168,15 @@
 
 
 # 4 Локальная балансировка <a name="local"></a>
+
+После того, как трафик попадает в дата центр, будет организована балансировка при помощи L7 балансировщика. Плюсом данного балансировщика будет снижение затрат при работе с HTTPS, так как внутри дата центра информация будет ходить по HTTP, без шифрования. Также он будет постоянно подключен к серверам, что уберёт задержку подключения.
+
+Балансировщики будут расположены с использованием VRRP, чтобы при выключении балансировщика включался запасной балансировщик.
+
+Для связи серверов внутри дата центра будет использоваться Sidecar Proxy. Так как приложения будту запущены в контейнерах, то также будет использоваться eBPF[^24], чтобы уменьшить количество потребляемой мощности процессора.
+
+На роль L7 балансировщика, а также Sidecar Proxy будет выбран Envoy[^22][^23], так как он быстрее работает с HTTPS, может обработать больше запросов, а также поддерживает динамическое изменение конфигурации по gRPC запросам. 
+
 ---
 
 # Список использованной литературы <a name="usageList"></a>
@@ -192,5 +201,8 @@
 [^19]: [Global Statistics Russia](https://datareportal.com/reports/digital-2023-russian-federation#:~:text=There%20were%20127.6%20million%20internet,percent%20of%20the%20total%20population.)
 [^20]: [Магистральные сети связи в России](https://www.comnews.ru/content/211042/2020-10-21/2020-w43/magistralnye-seti-svyazi-rossii)
 [^21]: [Население федеральных округов России](https://www.statdata.ru/naselenie-federalnyh-okrugov-rossii)
+[^22]: [Kubernetes Gateway Selection: Nginx or Envoy?](https://www.alibabacloud.com/blog/kubernetes-gateway-selection-nginx-or-envoy_599485)
+[^23]: [Benchmarking Envoy Proxy, HAProxy, and NGINX Performance on Kubernetes](https://www.getambassador.io/blog/envoy-proxy-performance-on-k8s)
+[^24]: [Hello eBPF! Goodbye Sidecars?](https://youtu.be/ThtRT8dhu8c?si=IjBqgWPV1Q03MwoE&t=676)
 
 [Методические Указания](https://github.com/init/highload/blob/main/homework_architecture.md)
