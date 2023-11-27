@@ -425,6 +425,27 @@ Latency-based DNS будет работать по следующему прин
 
 # 10 Рассчет оборудования
 
+## Балансировщики
+
+Nginx балансировщиков перед бэкендом: 567
+Больших балансировщиков: 92
+
+Система на балансировщиках: процессор мощностью больше 24 ядер.
+
+## Распознование
+<!-- TODO -->
+<!-- https://www.tomshardware.com/news/whisper-audio-transcription-gpus-benchmarked -->
+<!-- https://github.com/openai/whisper/discussions/918 -->
+<!-- https://deepgram.com/learn/benchmarking-top-open-source-speech-models#2080-ti-benchmarking -->
+
+Количество записей приходящих = 3 819, через 30 секунд под нагрузкой будет равен 114 570. За 1 секунду wav2vec 2.0 может обработать 224 секунды разговора.
+
+За 30 секунд нужно будет обработать 465 секунд пользователя, так как обработка постоянная. 20 836 464 секунд нужно обрабатывать.
+
+Таким образом для обаботки потребуется: 20 836 464 / 224 = 93 019 карт A5000.
+
+Если брать карту Tesla A100, которая может запустить 4 процесса, то нужно будет взять = 23 254.
+
 <!-- 
     TODO deepgram open source speech models, найти нагрузку моделей
     https://deepgram.com/learn/benchmarking-top-open-source-speech-models
