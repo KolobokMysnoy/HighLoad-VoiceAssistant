@@ -310,16 +310,10 @@ DNS отдаёт адрес "Big Balancer", поэтому весь входящ
 
 | БД           | Надежность | Эффективность |
 |-|-|-|
-| Hadoop       | Hadoop 3 Erasure Encoding, позволяет хранить вместо копий "parity cells"</br>Hadoop data node будут размещаться на разных серверах, разных рядах, для обеспечения надёжности системы при падения. | Flint будет использован для однократной записи в систему, так как может проверять |
+| Hadoop       | Hadoop 3 Erasure Encoding, позволяет хранить вместо копий "parity cells"</br>Hadoop data node будут размещаться на разных серверах, разных рядах, для обеспечения надёжности системы при падения.</br> Для Name Node будет использована "Backup Node". | Flint будет использован для однократной записи в систему, так как может проверять |
 | ClickHouse   | Создается Backup раз в день автоматически. | Ограничивать доступ по объёму запроса и количеству запросов в день. Создано шардирование. |
 | Kafka        | Для обеспечения сохранности данных будет использоваться фактор репликации 3. Данные будут храниться неделю, на случай выхода из строя Hadoop | Создание Kafka-broker с помощью Kafka Raft metadata[^43], чтобы выдерживать нагрузку |
 | Tarantool    | На каждом ДЦ создаются свои реплики. Между всеми репликами ставится связь Master-Master[^40]. Таким образом данные о пользователях будут на всех ДЦ. | Будет использовано круговое шардирование, для возможности добавления новых шардов в будущем. Индекс на логин пользователя, на сессию пользователя. |
-<!-- TODO репликация в ClickHouse -->
-<!-- 
-   TODO Hadoop
-   name node, подумать, куда их деть
-   Сколько блоков нужно для хранения Erasure Encoding (34:00)
- -->
 
 ### AIStore и S3
 
@@ -366,7 +360,7 @@ AIStore был выбран за следующие качества:
 
 ![Общая схема с прошлых этапов](image-19.png)
 
-![Активная часть схемы](image-24.png)
+![Активная часть схемы](image-26.png)
 
 ![Пассивная часть схемы](image-25.png)
 
@@ -402,42 +396,79 @@ AIStore был выбран за следующие качества:
 
 ## Балансировщики
 
-| Где требуется | Количество | CPU | RAM |
+| Где требуется  | Количество | CPU | RAM |
 |-|-|-|-|
 | Балансировщики | 659 | 24 ядер на каждое устройство | 16 GB |
 
 При 24 ядрах достигается наилучшее удержание соединений.
 
+## Работа логики
+
+| Сервис                       | Ядер  | RAM |
+|-|-|-|
+| Авторизации                  | 39    | 3900   |
+| Взаимодействия               | 390   | 3900   |
+| Распознование интента        | 390   | 3900   |
+| Поиска информации            | 39    | 3900   |
+| Выгрузки данных              | 390   | 3900*  |
+| Обучения моделей             | 390   | 3900   |
+| Логики                       | 390   | 3900   |
+| Hadoop                       | 390   | 3900*  |
+
+*Для быстроты работы максимальный объём памяти.
+
 ## Распознование
-<!-- TODO -->
-<!-- https://www.tomshardware.com/news/whisper-audio-transcription-gpus-benchmarked -->
-<!-- https://github.com/openai/whisper/discussions/918 -->
-<!-- https://deepgram.com/learn/benchmarking-top-open-source-speech-models#2080-ti-benchmarking -->
-Для расчета будут использованы две модели, одна для озвучивания текста, другая для распознования текста.
 
+Для расчета будут использованы две модели, одна для озвучивания текста, другая для распознования аудио.
 
-Рассчитаем для них нагрузку. Озвучивание текста идёт 
+### Распознование аудио
 
-Количество записей приходящих = 3 819, через 30 секунд под нагрузкой будет равен 114 570. За 1 секунду wav2vec 2.0 может обработать 224 секунды разговора.
+Из пункта 2.1 можно понять, что средняя продолжительность речи пользователя 7.5 секунд. Одновременное количество секунд, которые нужно обработать = 137 484.
 
-За 30 секунд нужно будет обработать 465 секунд пользователя, так как обработка постоянная. 20 836 464 секунд нужно обрабатывать.
+Модель для озвучивания wav2vec 2.0	выбрана за приемлимое количество ошибок и большую пропускную способность.
 
-Таким образом для обаботки потребуется: 20 836 464 / 224 = 93 019 карт A5000.
+Из статьи[^43] можно получить, что потребуется 137 484 / 224 = 613. 
 
-Если брать карту Tesla A100, которая может запустить 4 процесса, то нужно будет взять = 23 254.
+Потребление по памяти = 20 * 613 = 12 260 ГБ. Потребление по ядрам = 34.8% * 8,192(CUDA) * 613 = 1 747 550.
 
+Потребуется 253 A100.
 
-| Где требуется | Количество | CPU | RAM |
+### Озвучивание текста
+
+Для расчета перевода из текста в аудио, возьмём данные из статьи[^44]. 
+
+Модель для озвучивания FastPitch + Hifi-GAN, за большую пропускную способность. В 10 потоков обрабатывает 464.114 секунд за 1 секунду работы.
+
+Из пункта 2.1 можно понять, что озвученный текст в среднем 22.5 секунды. Получаем, что одновременно нужно озвучить 3 819 * 22.5 = 85 927 секунд. 
+
+Потребуется 185 видеокарт A100.
+
+### Всего видеокарт
+
+| Где требуется | Видеокарты |
 |-|-|-|-|
-| ML | | |  |
+| ASR            | 253 |
+| TTS            | 185 |
+
+ASR -- automatic speech recognition
+TTS -- text to speech
+
+## Конфигурация
+
+| Сервис                      | Хостинг | Конфигурация | Cores | Видеокарты | Cnt | Покупка | Аренда |
+| - | - | - | - | - | - | - | - |
+| Авторизации                  | own | Intel Xeon Silver 4314 Processor/2x 16GB 3200MHz DDR4/CyberServe Xeon SP1-104S G3 | 16 | - | 3 | $120 | -- |
+| Взаимодействия               | own | 2x Intel Xeon Gold 6448Y Processor/16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 7 | $1383 | -- |
+| Распознование речи           | own | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 32(8) | €71 145   | $345 344 |
+| Распознование интента        | own | 2x Intel Xeon Gold 6448Y Processor/16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 7 | $1383 | -- |
+| Поиска информации            | own | Intel Xeon Silver 4314 Processor/2x 16GB 3200MHz DDR4/CyberServe Xeon SP1-104S G3 | 16 | - | 3 | $120 | -- |
+| Озвучивания                  | own | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 23(8) | €51 135   | $248 216 |
+| Выгрузки данных              | own | 2x Intel Xeon Gold 6448Y Processor/16x128GB 4800MT/ 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 7 | 5 386 | -- |
+| Обучения моделей             | own | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 10(8) | €22 232  | $107 920 |
+| Логики                       | own | 2x Intel Xeon Gold 6448Y Processor/16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 7 | $1383 | -- |
+| Hadoop                       | own | Broadberry CyberStore 472S - SAS3 12Gb/s /2x Intel Xeon Gold 6346 Processor/18x 128GB/72x 15.36TB Samsung Enterprise/CyberStore 472S 12GB/s Storage Server | 16 | - | 19 | €79 183 | -- |
 
 
-<!-- 4к на 30 == диалоги сейчас идут -->
-<!-- 
-    TODO deepgram open source speech models, найти нагрузку моделей
-    https://deepgram.com/learn/benchmarking-top-open-source-speech-models
- -->
-<!-- TODO амортизация равна cost/5 амортизация за год(просто трата больших денег на 5 лет) -->
 ---
 
 # Список использованной литературы <a name="usageList"></a>
@@ -484,5 +515,6 @@ AIStore был выбран за следующие качества:
 [^41]: [AIStore: an open system for petascale deep learning](https://storagetarget.com/2021/04/14/aistore-an-open-system-for-petascale-deep-learning/)
 [^42]: [FEDERATION](https://prometheus.io/docs/prometheus/latest/federation/#:~:text=Hierarchical%20federation%20allows%20Prometheus%20to,larger%20number%20of%20subordinated%20servers.)
 [^43]: [KRaft — The Next Generation Kafka Architecture](https://levelup.gitconnected.com/kraft-the-next-generation-kafka-architecture-424e70f8481b)
+[^44]: [Benchmarking Top Open Source Speech Recognition Models: Whisper, Facebook wav2vec2, and Kaldi](https://deepgram.com/learn/benchmarking-top-open-source-speech-models#2080-ti-benchmarking)
 
 [Методические Указания](https://github.com/init/highload/blob/main/homework_architecture.md)
