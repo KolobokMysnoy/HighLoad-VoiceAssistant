@@ -425,7 +425,7 @@ AIStore был выбран за следующие качества:
 
 Модель для озвучивания wav2vec 2.0	выбрана за приемлимое количество ошибок и большую пропускную способность.
 
-Из статьи[^43] можно получить, что потребуется 137 484 / 224 = 613. 
+Из статьи[^44] можно получить, что потребуется 137 484 / 224 = 613. 
 
 Потребление по памяти = 20 * 613 = 12 260 ГБ. Потребление по ядрам = 34.8% * 8,192(CUDA) * 613 = 1 747 550.
 
@@ -433,7 +433,7 @@ AIStore был выбран за следующие качества:
 
 ### Озвучивание текста
 
-Для расчета перевода из текста в аудио, возьмём данные из статьи[^44]. 
+Для расчета перевода из текста в аудио, возьмём данные из статьи[^45]. 
 
 Модель для озвучивания FastPitch + Hifi-GAN, за большую пропускную способность. В 10 потоков обрабатывает 464.114 секунд за 1 секунду работы.
 
@@ -514,5 +514,6 @@ TTS -- text to speech
 [^42]: [FEDERATION](https://prometheus.io/docs/prometheus/latest/federation/#:~:text=Hierarchical%20federation%20allows%20Prometheus%20to,larger%20number%20of%20subordinated%20servers.)
 [^43]: [KRaft — The Next Generation Kafka Architecture](https://levelup.gitconnected.com/kraft-the-next-generation-kafka-architecture-424e70f8481b)
 [^44]: [Benchmarking Top Open Source Speech Recognition Models: Whisper, Facebook wav2vec2, and Kaldi](https://deepgram.com/learn/benchmarking-top-open-source-speech-models#2080-ti-benchmarking)
+[^45]: [Performance](https://docs.nvidia.com/deeplearning/riva/archives/180-b/user-guide/docs/performance.html#performance-considerations)
 
 [Методические Указания](https://github.com/init/highload/blob/main/homework_architecture.md)
