@@ -363,9 +363,8 @@ AIStore был выбран за следующие качества:
 | GitHub      | Система контроля версий, командная разработка, CI/CD.| - |
 | Kubernetes  | Deploy| Масштабирование, отказоустойчивость, утилизация ресурсов|
 | MPEG-DASH [^34] | Передача и разбиение аудио | Может разбивать и отправлять сразу по маленьким сегментам.<br> Открытый протокол, из-за чего нет стандартов.  |
-
-<!-- TODO перенести ML сюда -->
-<!-- TODO добавить WER, чтобы опираться на выбор -->
+| FastPitch + Hifi-GAN | Озвучивание текста | Данная модель выбрана за небольшое количество ошибок, а также за скорость работы|
+| wav2vec 2.0 | Перевод аудио в текст | Данная модель выбрана за небольшое количество ошибок, а также за скорость работы|
 
 # 8.1 Сервисы <a name="service"></a>
 
@@ -419,70 +418,20 @@ AIStore был выбран за следующие качества:
 
 ## Работа логики
 
-<!-- TODO все в одну таблицу с колвом по ДЦ -->
-
-| Сервис                       | Ядер  | RAM(МБ) |
-|-|-|-|
-| ***Москва*** |||
-| Авторизации                  | 11    | 1100   |
-| Взаимодействия               | 110   | 11 000   |
-| Распознование интента        | 110   | 11 000   |
-| Поиска информации            | 11    | 1100   |
-| Выгрузки данных              | 110   | 11 000*  |
-| Обучения моделей             | 110   | 11 000   |
-| Логики                       | 110   | 11 000   |
-| Hadoop                       | 110   | 11 000*  |
-| Kafka                        | 110   | 11 000* |
-| ClickHouse                   | 110   | 11 000* |
-| Tarantool                    | 110   | 11 000* |
-| ***Санкт-Петербург*** |||
-| Авторизации                  | 4    | 400   |
-| Взаимодействия               | 36   | 3600   |
-| Распознование интента        | 36   | 3600   |
-| Поиска информации            | 4    | 400   |
-| Выгрузки данных              | 36   | 3600*  |
-| Обучения моделей             | 36   | 3600   |
-| Логики                       | 36   | 3600   |
-| Hadoop                       | 36   | 3600*  |
-| Kafka                        | 36   | 3600*    |
-| ClickHouse                   | 36   | 3600*    |
-| Tarantool                    | 36   | 3600*    |
-| ***Екатеринбург*** |||
-| Авторизации                  | 11    | 1100   |
-| Взаимодействия               | 110   | 11 000   |
-| Распознование интента        | 110   | 11 000   |
-| Поиска информации            | 11    | 1100   |
-| Выгрузки данных              | 110   | 11 000*  |
-| Обучения моделей             | 110   | 11 000   |
-| Логики                       | 110   | 11 000   |
-| Hadoop                       | 110   | 11 000*  |
-| Kafka                        | 110   | 11 000*   |
-| ClickHouse                   | 110   | 11 000*   |
-| Tarantool                    | 110   | 11 000*   |
-| ***Хабаровск*** |||
-| Авторизации                  | 7     | 700   |
-| Взаимодействия               | 65   | 6500   |
-| Распознование интента        | 65   | 6500   |
-| Поиска информации            | 7     | 700   |
-| Выгрузки данных              | 65   | 6500*  |
-| Обучения моделей             | 65   | 6500   |
-| Логики                       | 65   | 6500   |
-| Hadoop                       | 65   | 6500*  |
-| Kafka                        | 65   | 6500*   |
-| ClickHouse                   | 65   | 6500*   |
-| Tarantool                    | 65   | 6500*   |
-| ***Краснодар*** |||
-| Авторизации                  | 7    | 700   |
-| Взаимодействия               | 70   | 7 000   |
-| Распознование интента        | 70   | 7 000   |
-| Поиска информации            | 7    | 700   |
-| Выгрузки данных              | 70   | 7 000*  |
-| Обучения моделей             | 70   | 7 000   |
-| Логики                       | 70   | 7 000   |
-| Hadoop                       | 70   | 7 000*  |
-| Kafka                        | 70   | 7 000*   |
-| ClickHouse                   | 70   | 7 000*   |
-| Tarantool                    | 70   | 7 000*   |
+| Сервис                       | Ядер и RAM(МБ) МСК | Ядер и RAM(МБ) СПБ | Ядер и RAM(МБ) ЕКБ | Ядер и RAM(МБ) </br>Хабаровск | Ядер и RAM(МБ) </br>Краснодар |
+|-|-|-|-|-|-|
+| Авторизации                  | 11  - 1100     | 4  - 400    | 11  - 1100    | 7  -  700  | 7  - 700    |
+| Взаимодействия               | 110 - 11 000   | 36 - 3600   | 110 - 11 000  | 65 - 6500  | 70 - 7 000  |
+| Распознование интента        | 110 - 11 000   | 36 - 3600   | 110 - 11 000  | 65 - 6500  | 70 - 7 000  |
+| Поиска информации            | 11  - 1100     | 4  - 400    | 11  - 1100    | 7  -  700  | 7  - 700    |
+| Выгрузки данных              | 110 - 11 000*  | 36 - 3600*  | 110 - 11 000* | 65 - 6500* | 70 - 7 000* |
+| Обучения моделей             | 110 - 11 000   | 36 - 3600   | 110 - 11 000  | 65 - 6500  | 70 - 7 000  |
+| Логики                       | 110 - 11 000   | 36 - 3600   | 110 - 11 000  | 65 - 6500  | 70 - 7 000  |
+| Hadoop                       | 110 - 11 000*  | 36 - 3600*  | 110 - 11 000* | 65 - 6500* | 70 - 7 000* |
+| Kafka                        | 110 - 11 000*  | 36 - 3600*  | 110 - 11 000* | 65 - 6500* | 70 - 7 000* |
+| ClickHouse                   | 110 - 11 000*  | 36 - 3600*  | 110 - 11 000* | 65 - 6500* | 70 - 7 000* |
+| Tarantool                    | 110 - 11 000*  | 36 - 3600*  | 110 - 11 000* | 65 - 6500* | 70 - 7 000* |
+| S3                           | 11  - 11 000*     | 4  - 4000*    | 11  - 11 000*    | 7  -  7000*  | 7  - 7000*    |
 
 *Для быстроты работы максимальный объём памяти.
 
@@ -526,81 +475,27 @@ AIStore был выбран за следующие качества:
 
 ## Конфигурация
 
-<!-- TODO все в одну таблицу с колвом по ДЦ(выбирать похожие сервисы и ставить их количество) -->
-
-| Сервис                       | Конфигурация | Cores | Видеокарты | Cnt | Покупка | Аренда |
-| - | - | - | - | - | - | - |
-| ***Москва*** |||||||
-| Авторизация |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 2 | $50 | -- |
-| Взаимодействия| 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $395 | -- |
-| Распознование речи | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 16(8) | €35 568   | $172 672 |
-| Распознование интента | 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $395 | -- |
-| Поиска информации |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 2 | $50 | -- |
-| Озвучивания | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 7(8) | €15 562   | $75 544 |
-| Выгрузки данных | 2x Intel Xeon Gold 6448Y Processor/16x128GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $1 539 | -- |
-| Логики| 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $395 | -- |
-| Балансировщики | AMD EPYC 7443P/2x 8GB 3200MHz DDR4/CyberServe EPYC EP1-102 | 24 | - | 182 | €7 462 | - |
-
-| Сервис                       | Конфигурация | Cores | Видеокарты | Cnt | Покупка | Аренда |
-| - | - | - | - | - | - | - |
-| ***Санкт-Петербург*** ||||||||
-| Авторизация |A2SDi-8C-HLN4F- 4-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 4 | - | 1 | $14 | -- |
-| Взаимодействие |AMD EPYC 7543P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|32|-|2|$149|--|
-| Распознование речи | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 6(8) | €13 338  | $64 752 |
-| Распознование интента |AMD EPYC 7543P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|32|-|2|$149|--|
-| Поиска информации |A2SDi-8C-HLN4F- 4-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 4 | - | 1 | $14 | -- |
-| Озвучивания | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 3(8) | €6 669   | $32 376 |
-| Выгрузки данных |AMD EPYC 7543P/10x128GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|32|-|2|$850|--|
-| Логики |AMD EPYC 7543P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|32|-|2|$149|--|
-| Балансировщики | AMD EPYC 7443P/2x 8GB 3200MHz DDR4/CyberServe EPYC EP1-102 | 24 | - | 64 | €2 501 | - |
-
-| Сервис                       | Конфигурация | Cores | Видеокарты | Cnt | Покупка | Аренда |
-| - | - | - | - | - | - | - |
-| ***Екатеринбург*** ||||||||
-| Авторизация |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 2 | $50 | -- |
-| Взаимодействия| 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $395 | -- |
-| Распознование речи | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 16(8) | €35 568   | $172 672 |
-| Распознование интента | 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $395 | -- |
-| Поиска информации |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 2 | $50 | -- |
-| Озвучивания | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 7(8) | €15 562   | $75 544 |
-| Выгрузки данных | 2x Intel Xeon Gold 6448Y Processor/16x128GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $1 539 | -- |
-| Логики| 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | $395 | -- |
-| Балансировщики | AMD EPYC 7443P/2x 8GB 3200MHz DDR4/CyberServe EPYC EP1-102 | 24 | - | 185 | €7 585 | - |
-
-| Сервис                       | Конфигурация | Cores | Видеокарты | Cnt | Покупка | Аренда |
-| - | - | - | - | - | - | - |
-| ***Хабаровск*** ||||||||
-| Авторизация |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 1 | $17 | -- |
-| Взаимодействие |AMD EPYC 7713P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|64|-|2|$240|--|
-| Распознование речи | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 10(8) | €22 230   | $107 920 |
-| Распознование интента |AMD EPYC 7713P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|64|-|2|$240|--|
-| Поиска информации |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 1 | $17 | -- |
-| Озвучивания | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 4(8) | €8 892   | $43 168 |
-| Выгрузки данных |2xIntel Xeon Gold 5320/20x 128GB 3200MHz DDR4/CyberServe Xeon SP2-108NS G3|52|-|2|€828|--|
-| Логики |AMD EPYC 7713P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|64|-|2|$240|--|
-| Балансировщики | AMD EPYC 7443P/2x 8GB 3200MHz DDR4/CyberServe EPYC EP1-102 | 24 | - | 110 | €4 510 | - |
-
-| Сервис                       | Конфигурация | Cores | Видеокарты | Cnt | Покупка | Аренда |
-| - | - | - | - | - | - | - |
-| ***Краснодарр*** ||||||||
-| Авторизация |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 1 | $17 | -- |
-| Взаимодействие |AMD EPYC 7713P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|64|-|2|$240|--|
-| Распознование речи | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 11(8) | €24 453   | $172 672 |
-| Распознование интента |AMD EPYC 7713P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|64|-|2|$240|--|
-| Поиска информации |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 | - | 1 | $17 | -- |
-| Озвучивания | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 5(8) | €11 115   | $53 960 |
-| Выгрузки данных |2xIntel Xeon Gold 5320/20x 128GB 3200MHz DDR4/CyberServe Xeon SP2-108NS G3|52|-|2|€828|--|
-| Логики |AMD EPYC 7713P/8GB 3200MHz DDR4 /CyberServe EPYC EP1-104S|64|-|2|$240|--|
-| Балансировщики | AMD EPYC 7443P/2x 8GB 3200MHz DDR4/CyberServe EPYC EP1-102 | 24 | - | 121 | €4 961 | - |
-
+| Сервис | Конфигурация | Cores | Видеокарты | Cnt(МСК) |Cnt(СПБ) |Cnt(ЕКБ) |Cnt(Хаб) |Cnt(Кра) | Покупка | Аренда |
+| - | - | - | - | - | - |- |- |- | - | - |
+| Авторизация           |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 |- | 2 | 1 | 2 | 1 | 1 | $50 | -- |
+| Взаимодействия        | 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 | - | 2 | 1 | 2 | 2 | 2 | $395 | -- |
+| Распознование речи    | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server | 64 | A100 | 16(8) | 6(8) | 16(8) | 10(8) | 11(8) | €35 568   | $172 672 |
+| Распознование интента | 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 |- | 2 |2 |2 | 2 | 2 | $395 | -- |
+| Поиска информации     |A2SDi-8C-HLN4F- 8-Core C3758 Atom/2x 4GB 2400MHz DDR4/CyberServe Atom-104i | 8 |- | 2 | 1 |2 | 1 | 1 | $50 | -- |
+| Озвучивания           | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 7(8) | 3(8) | 7(8) |4(8) | 5(8) | €15 562   | $75 544 |
+| Выгрузки данных       | 2x Intel Xeon Gold 6448Y Processor/16x128GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 |- | 2 | 2 |2 | 2 | 2 | $1 539 | -- |
+| Логики                | 2x Intel Xeon Gold 6448Y Processor/2x16GB 4800MT/s DDR5/CyberServe Xeon SP2-104S NVMe G4 | 64 |- | 2 | 2 | 2 | 2 | 2 | $395 | -- |
+| Балансировщики        | AMD EPYC 7443P/2x 8GB 3200MHz DDR4/CyberServe EPYC EP1-102 | 24 | - | 182 | 64 | 185 | 110 | 121 | €7 585 | - |
 
 Отдельно в каждом ДЦ будут следующие сервисы.
+
 | Сервис                       | Конфигурация | Cores | Cnt | Покупка | Аренда |
 | - | - | - | - | - | - |
 | Hadoop | 2x Intel Xeon Gold 6346 Processor/18x 128GB/72x 15.36TB Samsung Enterprise/CyberStore 472S 12GB/s Storage Server | 16 | 19 | €79 183 | -- |
 | Kafka |2x Intel Xeon Gold 6338 Processor/16x128GB 3200MHz DDR4/4x 20TB/CyberStore 212S 12GB/s Storage Server|64|2|€848|--|
 | ClickHouse |2xIntel Xeon Gold 6338/20x 128GB 3200MHz DDR4/2x 1.9TB SSD/CyberServe Xeon SP2-108NS G3|64|2|€930|--|
 | Tarantool |2xIntel Xeon Gold 6338/20x 128GB 3200MHz DDR4/2x 240GB SSD/CyberServe Xeon SP2-108NS G3|64|2|€915|--|
+| Minio |2xIntel Xeon Gold 6338/2x 64GB 3200MHz DDR4/2x 240GB SSD/CyberServe Xeon SP2-108NS G3|64|2|€915|--|
 
 Также сервис для обучения моделей.
 
@@ -608,7 +503,7 @@ AIStore был выбран за следующие качества:
 | - | - | - | - | - | - | - 
 | Обучения моделей              | AMD EPYC 7702P/8x64GB/500GBSamsung 970 EVO PLUS NVME M.2/CyberServe EPYC EP1-G292-Z20 GPU Server  | 64 |  A100 | 10(8) | €22 232  | $107 920 |
 
-Для увеличения надежности, все данные в таблицах нужно удвоить на 2, чтобы при падении ДЦ, другие ДЦ могли осилить нагрузку.
+Для увеличения надежности, всем данным в таблицах нужно добавить ещё 1, чтобы было резервирование n+1, чтобы при падении ДЦ, другие ДЦ могли осилить нагрузку.
 
 ---
 
